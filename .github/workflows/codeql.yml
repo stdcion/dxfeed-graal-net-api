@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'csharp' ]
-        config-file: .github/workflows/codeql-config.yml
+        config-file: '.github/workflows/codeql-config.yml'
 
     steps:
       - name: Checkout repository
