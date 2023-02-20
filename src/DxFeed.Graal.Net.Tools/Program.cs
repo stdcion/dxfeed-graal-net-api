@@ -15,27 +15,23 @@ internal abstract class Program
 {
     public static void Main(string[] args)
     {
-        string s = null;
         var cmdArgs = new ProgramArgs().ParseArgs(args);
         if (cmdArgs == null)
         {
             return;
         }
 
-        if (s == null)
+        switch (cmdArgs.Tool)
         {
-            switch (cmdArgs.Tool)
-            {
-                case Tools.Connect:
-                    ConnectTool.Run(args.AsSpan()[1..].ToArray());
-                    break;
-                case Tools.Dump:
-                    DumpTool.Run(args.AsSpan()[1..].ToArray());
-                    break;
-                case Tools.PerfTest:
-                    PerfTestTool.Run(args.AsSpan()[1..].ToArray());
-                    break;
-            }
+            case Tools.Connect:
+                ConnectTool.Run(args.AsSpan()[1..].ToArray());
+                break;
+            case Tools.Dump:
+                DumpTool.Run(args.AsSpan()[1..].ToArray());
+                break;
+            case Tools.PerfTest:
+                PerfTestTool.Run(args.AsSpan()[1..].ToArray());
+                break;
         }
     }
 }

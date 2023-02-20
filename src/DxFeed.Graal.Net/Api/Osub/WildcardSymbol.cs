@@ -39,7 +39,7 @@ public class WildcardSymbol
     /// and there is no provision to load-balance wildcard
     /// subscription amongst multiple threads.
     /// </summary>
-    public static readonly WildcardSymbol All = new(ReservedPrefix);
+    public static  WildcardSymbol All = new(ReservedPrefix);
 
     private readonly string _symbol;
 
