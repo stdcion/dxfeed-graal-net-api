@@ -27,7 +27,6 @@
     },
     "template": [
       "default",
-      "statictoc",
       "docs/templates/material"
     ],
     "xrefService": [

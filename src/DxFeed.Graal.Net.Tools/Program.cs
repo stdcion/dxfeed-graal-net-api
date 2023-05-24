@@ -5,16 +5,78 @@
 // </copyright>
 
 using System;
+using System.Threading;
+using DxFeed.Graal.Net.Api;
+using DxFeed.Graal.Net.Events.Market;
 using DxFeed.Graal.Net.Tools.Connect;
 using DxFeed.Graal.Net.Tools.Dump;
 using DxFeed.Graal.Net.Tools.PerfTest;
+using DxFeed.Graal.Net.Utils;
 
 namespace DxFeed.Graal.Net.Tools;
+
+public class Sub
+{
+    public event EventHandler? CloseEvent;
+
+    public void Attach(Feed feed) =>
+        feed.OnClose += OnClose;
+
+    public void Detach(Feed feed) =>
+        feed.OnClose -= OnClose;
+
+    public void Close()
+    {
+    }
+
+    public void OnClose(object? sender, EventArgs args)
+    {
+        if (sender is Feed feed)
+        {
+            Detach(feed);
+        }
+    }
+}
+
+public class Feed
+{
+    public event EventHandler? OnClose;
+
+    public void Close() =>
+        OnClose?.Invoke(this, EventArgs.Empty);
+}
 
 internal abstract class Program
 {
     public static void Main(string[] args)
     {
+        int aaa = DayUtil.GetYearMonthDayByDayId(19457);
+        var feed = DXEndpoint.Create().GetFeed();
+        var sub = new DXFeedSubscription(typeof(Quote));
+
+        new Thread(() =>
+        {
+            while (true)
+            {
+                feed.AttachSubscription(sub);
+                Console.WriteLine("!!!!");
+                feed.DetachSubscription(sub);
+            }
+        }).Start();
+        new Thread(() =>
+        {
+            while (true)
+            {
+                sub.Attach(feed);
+                Console.WriteLine("&&&");
+                sub.Detach(feed);
+            }
+        }).Start();
+        while (true)
+        {
+            Thread.Sleep(1000);
+        }
+        return;
         var cmdArgs = new ProgramArgs().ParseArgs(args);
         if (cmdArgs == null)
         {

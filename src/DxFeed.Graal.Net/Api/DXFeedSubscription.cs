@@ -9,9 +9,11 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using DxFeed.Graal.Net.Api.Osub;
+using DxFeed.Graal.Net.Events;
 using DxFeed.Graal.Net.Native.Events;
 using DxFeed.Graal.Net.Native.Interop;
 using DxFeed.Graal.Net.Native.Subscription;
+using DxFeed.Graal.Net.Utils;
 
 namespace DxFeed.Graal.Net.Api;
 
@@ -33,37 +35,35 @@ public sealed class DXFeedSubscription : IObservableSubscription, IDisposable
     /// </summary>
     private readonly IReadOnlySet<Type> _eventTypeSet;
 
-    /// <summary>
-    /// A delegate to pass to native code.
-    /// </summary>
-    private readonly EventListenerFunc _eventListenerFunc;
+    private readonly object _syncRoot = new();
+
+    private readonly ConcurrentSet<DXFeed> _attachedFeed = new();
 
     /// <summary>
     /// Lock for listener list.
     /// </summary>
     private readonly object _listenersLock = new();
 
+    public event EventHandler CloseEvent;
+
     /// <summary>
     /// List of event listeners.
     /// </summary>
     private volatile ImmutableList<DXFeedEventListener> _listeners = ImmutableList.Create<DXFeedEventListener>();
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DXFeedSubscription"/> class with specified feed native
-    /// for the given list of event types.
-    /// </summary>
-    /// <param name="subscriptionNative">The specified subscription native.</param>
-    /// <param name="eventTypesSet">The list of event types.</param>
-    internal unsafe DXFeedSubscription(SubscriptionNative subscriptionNative, IReadOnlySet<Type> eventTypesSet)
+    public DXFeedSubscription(params Type[] eventTypes)
     {
-        _subscriptionNative = subscriptionNative;
-        _eventTypeSet = eventTypesSet;
-        _eventListenerFunc = EventListenerFuncWrapper;
+        _subscriptionNative = SubscriptionNative.Create(EventCodeAttribute.GetEventCodes(eventTypes));
+        _eventTypeSet = new HashSet<Type>(eventTypes);
+    }
+
+    public DXFeedSubscription(IEnumerable<Type> eventTypes)
+        : this(eventTypes.ToArray())
+    {
     }
 
     /// <inheritdoc/>
-    public bool IsClosed =>
-        _subscriptionNative.IsClosed();
+    public bool IsClosed => false;
 
     /// <inheritdoc/>
     public IReadOnlySet<Type> GetEventTypes() =>
@@ -77,15 +77,37 @@ public sealed class DXFeedSubscription : IObservableSubscription, IDisposable
     /// Attaches subscription to the specified feed.
     /// </summary>
     /// <param name="feed">The <see cref="DXFeed"/> to attach to.</param>
-    public void Attach(DXFeed feed) =>
-        feed.AttachSubscription(this);
+    public void Attach(DXFeed feed)
+    {
+        lock (_syncRoot)
+        {
+            if (!_attachedFeed.Add(feed))
+            {
+                return;
+            }
+
+            feed.AttachInternal(this);
+            //_subscriptionNative.Attach(feed);
+        }
+    }
 
     /// <summary>
     /// Detaches subscription from the specified feed.
     /// </summary>
     /// <param name="feed">The <see cref="DXFeed"/> to detach from.</param>
-    public void Detach(DXFeed feed) =>
-        feed.DetachSubscription(this);
+    public void Detach(DXFeed feed)
+    {
+        lock (_syncRoot)
+        {
+            if (!_attachedFeed.Remove(feed))
+            {
+                return;
+            }
+
+            feed.DetachInternal(this);
+            //_subscriptionNative.Attach(feed);
+        }
+    }
 
     /// <summary>
     /// Adds listener for events.
@@ -103,7 +125,7 @@ public sealed class DXFeedSubscription : IObservableSubscription, IDisposable
         {
             if (_listeners.IsEmpty)
             {
-                _subscriptionNative.SetEventListener(_eventListenerFunc);
+                //_subscriptionNative.SetEventListener(_eventListenerFunc);
             }
 
             _listeners = _listeners.Add(listener);
@@ -124,7 +146,7 @@ public sealed class DXFeedSubscription : IObservableSubscription, IDisposable
 
             if (_listeners.IsEmpty)
             {
-                _subscriptionNative.ClearEventListener();
+                // _subscriptionNative.ClearEventListener();
             }
         }
     }
@@ -155,7 +177,7 @@ public sealed class DXFeedSubscription : IObservableSubscription, IDisposable
     /// </summary>
     /// <param name="symbols">The collection of symbols.</param>
     public void RemoveSymbols(params object[] symbols) =>
-        _subscriptionNative.RemoveSymbol(symbols);
+        _subscriptionNative.RemoveSymbols(symbols);
 
     /// <summary>
     /// Removes the specified collection of symbols from the set of subscribed symbols.
@@ -176,16 +198,23 @@ public sealed class DXFeedSubscription : IObservableSubscription, IDisposable
     /// Closes this subscription and makes it <i>permanently</i> detached.
     /// <a href="https://docs.dxfeed.com/dxfeed/api/com/dxfeed/api/DXFeedSubscription.html#close--">Javadoc.</a>
     /// </summary>
-    // ToDo Should notify the close. If it is attached to the feed, the feed should detach it.
-    public void Close() =>
+    public void Close()
+    {
+        foreach (var feed in _attachedFeed)
+        {
+            feed.DetachInternal(this);
+        }
+
+        _attachedFeed.Clear();
         _subscriptionNative.Close();
+    }
 
     /// <summary>
     /// Releases all resources used by the current instance of the <see cref="DXFeedSubscription"/> class.
     /// </summary>
     // ToDo Must use Close().
     public void Dispose() =>
-        _subscriptionNative.Dispose();
+        Close();
 
     internal SubscriptionNative GetNative() =>
         _subscriptionNative;

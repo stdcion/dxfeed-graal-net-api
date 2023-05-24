@@ -7,7 +7,7 @@
 using System;
 using System.Runtime.InteropServices;
 using DxFeed.Graal.Net.Native.ErrorHandling;
-using DxFeed.Graal.Net.Native.Feed;
+using DxFeed.Graal.Net.Native.Feed.Handles;
 using DxFeed.Graal.Net.Native.Graal;
 using DxFeed.Graal.Net.Native.Interop;
 using DxFeed.Graal.Net.Native.Publisher;
