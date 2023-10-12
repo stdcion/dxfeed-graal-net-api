@@ -197,7 +197,7 @@ internal sealed unsafe class SubscriptionNative : IDisposable
             nint thread,
             SubscriptionHandle* subHandle,
             EventListenerHandle* eventListenerHandle) =>
-            ErrorCheck.NativeCall(thread, NativeAddEventListener(thread, subHandle, eventListenerHandle, OnSubFinalize, 0));
+            ErrorCheck.NativeCall(thread, NativeAddEventListener(thread, subHandle, eventListenerHandle));
 
         public static void RemoveEventListener(
             nint thread,
@@ -336,9 +336,7 @@ internal sealed unsafe class SubscriptionNative : IDisposable
         private static extern int NativeAddEventListener(
             nint thread,
             SubscriptionHandle* subHandle,
-            EventListenerHandle* listenerHandle,
-            SubFinalizeFunc endpointFinalize,
-            nint userData);
+            EventListenerHandle* listenerHandle);
 
         [DllImport(
             ImportInfo.DllName,

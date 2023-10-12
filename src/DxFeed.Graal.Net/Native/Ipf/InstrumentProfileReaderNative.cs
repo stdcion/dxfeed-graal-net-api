@@ -12,7 +12,7 @@ using DxFeed.Graal.Net.Native.Ipf.Handles;
 
 namespace DxFeed.Graal.Net.Native.Ipf;
 
-public class InstrumentProfileReaderNative : IDisposable
+internal class InstrumentProfileReaderNative : IDisposable
 {
     private readonly InstrumentProfileReaderSafeHandle handle;
 
@@ -23,23 +23,23 @@ public class InstrumentProfileReaderNative : IDisposable
         new(InstrumentProfileReaderSafeHandle.Create());
 
     public long GetLastModified() =>
-        handle.GetLastModify();
+        handle.GetLastModified();
 
     public bool WasComplete() =>
         handle.WasComplete();
 
-    public List<InstrumentProfile> ReadFromFile(string address, string user, string password)
+    public List<InstrumentProfile> ReadFromFile(string address, string? user, string? password)
     {
         var result = new List<InstrumentProfile>();
         unsafe
         {
-            ListNative<IpfNative>* profiles = null;
+            ListNative<InstrumentProfileNative>* profiles = null;
             try
             {
                 profiles = handle.ReadFromFile(address, user, password);
                 for (var i = 0; i < profiles->Size; i++)
                 {
-                    result.Add(IpfMapper.Convert(profiles->Elements[i]));
+                    result.Add(InstrumentProfileMapper.Convert(profiles->Elements[i]));
                 }
             }
             finally
