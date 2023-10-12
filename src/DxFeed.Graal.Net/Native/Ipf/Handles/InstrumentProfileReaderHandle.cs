@@ -8,6 +8,9 @@ using System.Runtime.InteropServices;
 
 namespace DxFeed.Graal.Net.Native.Ipf.Handles;
 
+/// <summary>
+/// A handle that represents a Java <c>com.dxfeed.ipf.InstrumentProfileReader</c> object.
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 internal readonly struct InstrumentProfileReaderHandle
 {
