@@ -5,12 +5,25 @@
 // </copyright>
 
 using System.Runtime.InteropServices;
+using DxFeed.Graal.Net.Native.ErrorHandling;
+using DxFeed.Graal.Net.Native.Interop;
 
 namespace DxFeed.Graal.Net.Native.Ipf.Handles;
 
-[StructLayout(LayoutKind.Sequential)]
-internal readonly struct InstrumentProfileUpdateListenerHandle
+internal unsafe class InstrumentProfileUpdateListenerHandle : JavaFinalizeSafeHandle
 {
-    // ReSharper disable once MemberCanBePrivate.Global
-    public readonly JavaObjectHandle Handle;
+    public static InstrumentProfileUpdateListenerHandle Create(
+        delegate* unmanaged[Cdecl]<nint, IterableInstrumentProfileHandle, void> listener,
+        GCHandle handle) =>
+        ErrorCheck.NativeCall(CurrentThread, NativeCreate(CurrentThread, listener, GCHandle.ToIntPtr(handle)));
+
+    [DllImport(
+        ImportInfo.DllName,
+        CallingConvention = CallingConvention.Cdecl,
+        CharSet = CharSet.Ansi,
+        EntryPoint = "dxfg_InstrumentProfileUpdateListener_new")]
+    private static extern InstrumentProfileUpdateListenerHandle NativeCreate(
+        nint thread,
+        delegate* unmanaged[Cdecl]<nint, IterableInstrumentProfileHandle, void> listener,
+        nint handle);
 }
