@@ -28,6 +28,9 @@ public class InstrumentProfileReader
 {
     private readonly InstrumentProfileReaderNative ipfReaderNative = InstrumentProfileReaderNative.Create();
 
+    public static string? ResolveSourceUrl(string address) =>
+        InstrumentProfileReaderNative.ResolveSourceUrl(address);
+
     /// <summary>
     /// Returns last modification time (in milliseconds) from last <see cref="ReadFromFile(string)"/> operation
     /// or zero if it is unknown.
@@ -68,7 +71,7 @@ public class InstrumentProfileReader
     /// In other cases data considered uncompressed and will be parsed as is.
     /// <br/>
     /// Specified user and password take precedence over authentication information that is supplied to this method
-    /// as part of URL user info like <c>"http://user:password@host:port/path/file.ipf"}</c>.
+    /// as part of URL user info like <c>"http://user:password@host:port/path/file.ipf"</c>.
     /// <br/>
     /// This operation updates <see cref="GetLastModified"/> and <see cref="WasComplete"/>.
     /// </summary>

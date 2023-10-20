@@ -14,7 +14,7 @@ jobs:
         include:
           - os: windows-latest
             OS_NAME: win-x64
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             OS_NAME: linux-x64
           - os: macos-11
             OS_NAME: osx-x64

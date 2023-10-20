@@ -10,11 +10,11 @@ namespace DxFeed.Graal.Net.Native.Ipf;
 
 internal class InstrumentProfileCollectorNative
 {
-    private readonly InstrumentProfileCollectorSafeHandle handle;
+    private readonly InstrumentProfileCollectorHandle handle;
 
-    private InstrumentProfileCollectorNative(InstrumentProfileCollectorSafeHandle builderHandle) =>
+    private InstrumentProfileCollectorNative(InstrumentProfileCollectorHandle builderHandle) =>
         handle = builderHandle;
 
     public static InstrumentProfileCollectorNative Create() =>
-        new(InstrumentProfileCollectorSafeHandle.Create());
+        new(InstrumentProfileCollectorHandle.Create());
 }
